@@ -3,6 +3,7 @@ netweaver
 
 Measure virtual networking performance with varying traffic patterns and underlying configurations.
 
+![Overhead explained](https://raw.github.com/andyhky/netweaver/master/netweaver.png "overhead explained")
 
 Requirements
 ==
