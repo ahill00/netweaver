@@ -1,7 +1,6 @@
 import argparse
 import datetime
 import math
-import os
 # Ignore the Paramiko warning.
 import warnings
 with warnings.catch_warnings():
@@ -10,6 +9,7 @@ with warnings.catch_warnings():
 import time
 import threading
 import uuid
+
 
 class NetWeaver(object):
 
@@ -31,8 +31,10 @@ class NetWeaver(object):
             destination_host_ip, username='root', key_filename=ssh_key_path)
 
         trace_uuid = uuid.uuid4().__str__()
-        self.pif_filename = '%s%s_pif' % (self.destination_name_label, trace_uuid)
-        self.vif_filename = '%s%s_vif' % (self.destination_name_label, trace_uuid)
+        self.pif_filename = '%s%s_pif' % (
+            self.destination_name_label, trace_uuid)
+        self.vif_filename = '%s%s_vif' % (
+            self.destination_name_label, trace_uuid)
         self.threads = None
 
     def determine_vif_number(self, vif_number=0):
@@ -53,9 +55,11 @@ class NetWeaver(object):
     def generate_and_record(self, source_command, dest_pif_cmd, dest_vif_cmd):
         if self.verify_connections():
             combined_cmd = "%s & %s" % (dest_vif_cmd, dest_pif_cmd)
-            dest_thread = threading.Thread(target=self.run_command, args=(self.destination_connection, combined_cmd))
+            dest_thread = threading.Thread(target=self.run_command, args=(
+                self.destination_connection, combined_cmd))
             dest_thread.start()
-            source_thread = threading.Thread(target=self.run_command, args=(self.source_connection, source_command))
+            source_thread = threading.Thread(target=self.run_command, args=(
+                self.source_connection, source_command))
             source_thread.start()
             self.threads = [source_thread, dest_thread]
             return self.threads
@@ -70,9 +74,9 @@ class NetWeaver(object):
 
     def analyze(self, seq_no_col, timestamp_col, seq_no_split_by, seq_no_split_index):
         vif_capture = self.clean_file(self.vif_filename,
-                                 seq_no_col, timestamp_col, seq_no_split_by, seq_no_split_index)
+                                      seq_no_col, timestamp_col, seq_no_split_by, seq_no_split_index)
         pif_capture = self.clean_file(self.pif_filename,
-                                 seq_no_col, timestamp_col, seq_no_split_by, seq_no_split_index)
+                                      seq_no_col, timestamp_col, seq_no_split_by, seq_no_split_index)
         deltas = list()
         try:
             for key in pif_capture.keys():
@@ -81,15 +85,14 @@ class NetWeaver(object):
         except KeyError:
             pass
 
-        deltas = [((delta.days * 24 * 60 * 60 + delta.seconds) * 1000 + delta.microseconds / 1000) for delta in deltas]
+        deltas = [((delta.days * 24 * 60 * 60 + delta.seconds)
+                   * 1000 + delta.microseconds / 1000) for delta in deltas]
         stat = {}
         stat['average'] = sum(deltas) / float(len(deltas))
         stat['minimum'] = min(deltas)
         stat['maximum'] = max(deltas)
-        stat['variance'] = [(delta - stat['average'])**2 for delta in deltas]
-        stat['stdev'] = math.sqrt(sum(stat['variance']) / float(len(stat['variance'])))
-        # We don't really care about variance being returned, only aggregate stats.
-        stat.pop('variance')
+        variance = [(delta - stat['average'])**2 for delta in deltas]
+        stat['stdev'] = math.sqrt(sum(variance) / float(len(variance)))
         return stat
 
     def clean_file(self, filepath, seq_no_col, timestamp_col, seq_no_split_by, seq_no_split_index):
@@ -101,13 +104,14 @@ class NetWeaver(object):
             try:
                 if seq_no_split_by:
                     sequence = lineparts[seq_no_col].split(
-                    seq_no_split_by)[seq_no_split_index]
+                        seq_no_split_by)[seq_no_split_index]
                 else:
                     sequence = lineparts[seq_no_col]
             except IndexError:
                 continue
             timestamp = lineparts[timestamp_col]
-            cleansed_output[sequence] = times = datetime.datetime.strptime(timestamp, "%H:%M:%S.%f")
+            cleansed_output[sequence] = times = datetime.datetime.strptime(
+                timestamp, "%H:%M:%S.%f")
         file.close()
         return cleansed_output
 
@@ -121,7 +125,7 @@ class NetWeaver(object):
 
 if __name__ == "__main__":
     usage = """python netweaver.py [-s source_ip] [-d destination_ip] [-h destination_hypervisor] [-n destination_name_label] [-k key_path]"""
-    parser = argparse.ArgumentParser('Netweaver')
+    parser = argparse.ArgumentParser('netweaver.py')
     parser.add_argument('-s', dest='source_ip')
     parser.add_argument('-d', dest='destination_ip')
     parser.add_argument('--hv', dest='dom0_ip')
@@ -134,14 +138,14 @@ if __name__ == "__main__":
     weaver = NetWeaver(
         options.source_ip, options.destination_name_label, options.destination_ip, options.dom0_ip, options.key_path)
 
-    source_command = 'hping3 -c 1000 -S -L 0 --fast %s' % (options.destination_ip)
+    source_command = 'hping3 -c 1000 -S -L 0 --fast %s' % (
+        options.destination_ip)
     weaver.verify_connections()
 
     destination_vif = weaver.determine_vif_number(options.vif_num)
 
-    source_command = 'hping3 -c 1000 -S -L 0 -Q --fast %s' % (options.destination_ip)
-    # You need to know which column the sequence number is in a pcap from
-    # source_command. This one is Column #8 (first part)
+    source_command = 'hping3 -c 1000 -S -L 0 -Q --fast %s' % (
+        options.destination_ip)
 
     destination_pif_cmd = 'tcpdump -tttt -nnni %s -c 1000 src host %s and dst host %s | tee /tmp/%s' % (
         options.host_interface, options.source_ip, options.destination_ip, weaver.pif_filename)

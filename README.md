@@ -1,5 +1,5 @@
-NetWeaver
-===
+netweaver
+=========
 
 Measure virtual networking performance with varying traffic patterns and underlying configurations.
 
@@ -7,11 +7,12 @@ Measure virtual networking performance with varying traffic patterns and underly
 Requirements
 ==
 
+* Paramiko `pip install paramiko`
 * XenServer 5.6 or greater; easily extended to other hypervisors by overriding `determine_vif_number()`
 * Key based root SSH to destination hypervisor
 * Specific root SSH key in authorized_keys on source VM
 
-- - - 
+- - -
 
 Getting Started
 ==
@@ -34,7 +35,7 @@ Example usage:
 Most options are self explanatory. `--num` refers to x in `vif1.x`… most single nic VMs will only have a `vif1.0`, each additional vif gets that 0 incremented.
 
 The numbers output are in microseconds.
-- - - 
+- - -
 
 Details
 ===
@@ -54,7 +55,7 @@ You also need to know what sort of packet your `source_command` produces. The `s
 
 	2013-05-21 20:53:56.421831 IP 192.168.1.2.2911 > 192.168.1.1.0: S 36550021:36550021(0) win 512
 
-The call to `analyze()` requires the following parameters: 
+The call to `analyze()` requires the following parameters:
 
 * `seq_no_col` : packet sequence number column (starting from 0 -(#7 in the example packet)
 * `timestamp_col` : timestamp column (starting from 0 - #1 in the example packet)
